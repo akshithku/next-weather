@@ -1,296 +1,170 @@
-// "use client";
+"use Client";
+import axios from "axios";
+import React, {
+  useContext,
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+  ChangeEvent,
+} from "react";
+import defaultStates from "../utils/defaultStates";
 
-// import axios from 'axios';
-// import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react';
+import { debounce } from "lodash";
 
-// // Define interfaces for the data
-// interface MainData {
-//   temp: number;
-//   feels_like: number;
-//   temp_min: number;
-//   temp_max: number;
-//   pressure: number;
-//   humidity: number;
-// }
-
-// interface ForecastData {
-//   main: MainData;
-//   [key: string]: any;
-// }
-
-// interface AirQualityData {
-//     pm25: number;
-//     pm10: number;
-//     [key: string]: any;
-//   }
-
-//   interface FiveDayForecastData {
-//     list: Array<any>; 
-//     [key: string]: any;
-//   }
-
-//   interface UvIndexData {
-//     value: number;
-//     date_iso: string;
-//     [key: string]: any;
-//   }
-//   interface GlobalContextType {
-//     forecast: ForecastData | undefined;
-//     airQuality: AirQualityData | undefined;
-//     fiveDayForecast: FiveDayForecastData | undefined;
-//     uvIndex: UvIndexData | undefined;
-//   }
-  
-
-// const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
-// const GlobalContextUpdate = createContext<Dispatch<SetStateAction<ForecastData | undefined>> | undefined>(undefined);
-
-// interface GlobalContextProviderProps {
-//   children: ReactNode;
-// }
-
-// const GlobalContextProvider: React.FC<GlobalContextProviderProps> = ({ children }) => {
-//     const [forecast, setForecast] = useState<ForecastData | undefined>(undefined);
-//     const [airQuality, setAirQuality] = useState<AirQualityData | undefined>(undefined);
-//     const [fiveDayForecast, setFiveDayForecast] = useState<FiveDayForecastData | undefined>(undefined);
-//     const [uvIndex, setUvIndex] = useState<UvIndexData | undefined>(undefined); 
-
-
-
-//     const fetchForecast = async () => {
-//         try {
-//             const res = await axios.get("api/weather");
-//             // console.log("res", res.data);
-//             setForecast(res.data);
-//         } catch (error) {
-//             console.log("Error fetching forecast data: ", error);
-//         }
-//     }
-
-//     const fetchAirQuality = async ()=>{
-//         try {
-//             const res = await axios.get("api/pollution");
-//             // console.log("air data",res.data);
-//             setAirQuality(res.data)
-//         } catch (error) {
-//             console.log("Error fetching air quality data: ", error);
-//         }
-//     }
-
-//     const fetchfiveDayForecast= async()=>{
-//         try {
-//             const res = await axios.get('api/fiveday');
-//             // console.log("five day forecast dat:: ", res.data);
-//             setFiveDayForecast(res.data);
-//         } catch (error) {
-//             console.log("Error fetching five day forecast data: ", error);
-//         }
-//     }
-
-//     const fetchUvIndex = async()=>{
-//         try {
-//             const res = await axios.get('/api/uv');
-//             setUvIndex(res.data);
-//             // console.log("UV Index", res.data);
-//         }catch(error){
-//             console.log("Error fetching the forecast:",error);
-//         }
-//     }
-
-//     useEffect(() => {
-//         fetchForecast();
-//         fetchAirQuality();
-//         fetchfiveDayForecast();
-//         fetchUvIndex();
-//     }, []);
-
-//     return (
-//         <GlobalContext.Provider value={{forecast,
-//             airQuality,
-//             fiveDayForecast,
-//             uvIndex,
-//         }}>
-//             <GlobalContextUpdate.Provider value={setForecast}>
-//                 {children}
-//             </GlobalContextUpdate.Provider>
-//         </GlobalContext.Provider>
-//     );
-// };
-
-// export default GlobalContextProvider;
-// export const useGlobalContext = () => useContext(GlobalContext);
-// export const useGlobalContextUpdate = () => useContext(GlobalContextUpdate);
-
-"use client";
-
-import axios from 'axios';
-import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react';
-import defaultStates from '../utils/defaultStates';
-import {debounce} from "lodash";
-
-// Define interfaces for the data
-interface MainData {
-  temp: number;
-  feels_like: number;
-  temp_min: number;
-  temp_max: number;
-  pressure: number;
-  humidity: number;
-}
-
-interface ForecastData {
-  main: MainData;
-  [key: string]: any;
-}
-
-interface AirQualityData {
-  pm25: number;
-  pm10: number;
-  [key: string]: any;
-}
-
-interface FiveDayForecastData {
-  list: Array<any>; 
-  [key: string]: any;
-}
-
-interface UvIndexData {
-  value: number;
-  date_iso: string;
-  [key: string]: any;
-}
-
+// Define the types for the context values
 interface GlobalContextType {
-  forecast: ForecastData | undefined;
-  airQuality: AirQualityData | undefined;
-  fiveDayForecast: FiveDayForecastData | undefined;
-  uvIndex: UvIndexData | undefined;
+  forecast: Record<string, any>;
+  airQuality: Record<string, any>;
+  fiveDayForecast: Record<string, any>;
+  uvIndex: Record<string, any>;
   geoCodedList: typeof defaultStates;
   inputValue: string;
-  handleInput: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+  handleInput: (e: ChangeEvent<HTMLInputElement>) => void;
+  setActiveCityCoords: React.Dispatch<React.SetStateAction<[number, number]>>;
 }
 
-// Create the context
-const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
-const GlobalContextUpdate = createContext<{
-  setForecast: Dispatch<SetStateAction<ForecastData | undefined>>,
-  setActiveCityCoords: Dispatch<SetStateAction<[number, number]>>
-} | undefined>(undefined);
+interface GlobalContextUpdateType {
+  setActiveCityCoords: React.Dispatch<React.SetStateAction<[number, number]>>;
+}
 
+// Create contexts with initial undefined values
+const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
+const GlobalContextUpdate = createContext<GlobalContextUpdateType | undefined>(
+  undefined
+);
+
+// Define the component props type
 interface GlobalContextProviderProps {
   children: ReactNode;
 }
 
-// Context Provider Component
-const GlobalContextProvider: React.FC<GlobalContextProviderProps> = ({ children }) => {
-  const [forecast, setForecast] = useState<ForecastData | undefined>(undefined);
-  const [airQuality, setAirQuality] = useState<AirQualityData | undefined>(undefined);
-  const [fiveDayForecast, setFiveDayForecast] = useState<FiveDayForecastData | undefined>(undefined);
-  const [uvIndex, setUvIndex] = useState<UvIndexData | undefined>(undefined); 
-  const [geoCodedList, setGeoCodedList] = useState(defaultStates);
-  const [inputValue, setInputValue] = useState("");
+export const GlobalContextProvider = ({
+  children,
+}: GlobalContextProviderProps) => {
+  const [forecast, setForecast] = useState<Record<string, any>>({});
+  const [geoCodedList, setGeoCodedList] = useState<typeof defaultStates>(
+    defaultStates
+  );
+  const [inputValue, setInputValue] = useState<string>("");
+
   const [activeCityCoords, setActiveCityCoords] = useState<[number, number]>([
     51.752021, -1.257726,
   ]);
 
-  const fetchForecast = async (lat : any, lon : any) => {
+  const [airQuality, setAirQuality] = useState<Record<string, any>>({});
+  const [fiveDayForecast, setFiveDayForecast] = useState<Record<string, any>>(
+    {}
+  );
+  const [uvIndex, seUvIndex] = useState<Record<string, any>>({});
+
+  // Fetch weather forecast
+  const fetchForecast = async (lat: number, lon: number) => {
     try {
       const res = await axios.get(`/api/weather?lat=${lat}&lon=${lon}`);
+
       setForecast(res.data);
-    } catch (error) {
-      console.log("Error fetching forecast data: ", error);
-    }
-  }
-
-  const fetchAirQuality = async (lat : any, lon : any) => {
-    try {
-      const res = await axios.get(`/api/pollution?lat=${lat}&lon=${lon}`);
-      setAirQuality(res.data);
-    } catch (error) {
-      console.log("Error fetching air quality data: ", error);
-    }
-  }
-
-  const fetchFiveDayForecast = async (lat : any, lon : any) => {
-    try {
-      const res = await axios.get(`/api/fiveday?lat=${lat}&lon=${lon}`);
-      setFiveDayForecast(res.data);
-    } catch (error) {
-      console.log("Error fetching five day forecast data: ", error);
-    }
-  }
-
-  const fetchGeoCodedList = async (search : React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const res = await axios.get(`/api/geocoded?search=${search}`);
-      // console.log("data", res.data);
-      setGeoCodedList(res.data);
-    } catch (error) {
-      console.log("Error fetching geocoded list: ", error);
+    } catch (error: any) {
+      console.log("Error fetching forecast data: ", error.message);
     }
   };
 
+  // Fetch air quality
+  const fetchAirQuality = async (lat: number, lon: number) => {
+    try {
+      const res = await axios.get(`/api/pollution?lat=${lat}&lon=${lon}`);
+      setAirQuality(res.data);
+    } catch (error: any) {
+      console.log("Error fetching air quality data: ", error.message);
+    }
+  };
 
+  // Fetch five day forecast
+  const fetchFiveDayForecast = async (lat: number, lon: number) => {
+    try {
+      const res = await axios.get(`/api/fiveday?lat=${lat}&lon=${lon}`);
 
-  const fetchUvIndex = async (lat : any, lon : any) => {
+      setFiveDayForecast(res.data);
+    } catch (error: any) {
+      console.log("Error fetching five day forecast data: ", error.message);
+    }
+  };
+
+  // Fetch geocoded list
+  const fetchGeoCodedList = async (search: string) => {
+    try {
+      const res = await axios.get(`/api/geocoded?search=${search}`);
+
+      setGeoCodedList(res.data);
+    } catch (error: any) {
+      console.log("Error fetching geocoded list: ", error.message);
+    }
+  };
+
+  // Fetch UV data
+  const fetchUvIndex = async (lat: number, lon: number) => {
     try {
       const res = await axios.get(`/api/uv?lat=${lat}&lon=${lon}`);
-      setUvIndex(res.data);
-    } catch (error) {
-      console.log("Error fetching UV Index data: ", error);
+
+      seUvIndex(res.data);
+    } catch (error: any) {
+      console.error("Error fetching the UV index:", error);
     }
-  }
+  };
 
-  
-
-  const handleInput = (e : any) =>{
+  // Handle input change
+  const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
 
-    if(e.target.value === ""){
+    if (e.target.value === "") {
       setGeoCodedList(defaultStates);
     }
-  }
+  };
 
-  useEffect(()=>{
-    const debouncedFetch = debounce((serach)=>{
-      fetchGeoCodedList(serach);
-    },500);
-    if(inputValue){
+  // Use debounce for input fetching
+  useEffect(() => {
+    const debouncedFetch = debounce((search: string) => {
+      fetchGeoCodedList(search);
+    }, 500);
+
+    if (inputValue) {
       debouncedFetch(inputValue);
     }
 
-    return ()=> debouncedFetch.cancel();
-  },[inputValue])
+    // Cleanup
+    return () => debouncedFetch.cancel();
+  }, [inputValue]);
 
+  // Fetch data on coordinates change
   useEffect(() => {
-    fetchForecast(activeCityCoords[0],activeCityCoords[1]);
-    fetchAirQuality(activeCityCoords[0],activeCityCoords[1]);
-    fetchFiveDayForecast(activeCityCoords[0],activeCityCoords[1]);
-    fetchUvIndex(activeCityCoords[0],activeCityCoords[1]);
+    fetchForecast(activeCityCoords[0], activeCityCoords[1]);
+    fetchAirQuality(activeCityCoords[0], activeCityCoords[1]);
+    fetchFiveDayForecast(activeCityCoords[0], activeCityCoords[1]);
+    fetchUvIndex(activeCityCoords[0], activeCityCoords[1]);
   }, [activeCityCoords]);
 
   return (
-    <GlobalContext.Provider value={{
-      forecast,
-      airQuality,
-      fiveDayForecast,
-      uvIndex,
-      geoCodedList,
-      inputValue,
-      handleInput,  
-    }}>
-      <GlobalContextUpdate.Provider value={{
-        setForecast,
+    <GlobalContext.Provider
+      value={{
+        forecast,
+        airQuality,
+        fiveDayForecast,
+        uvIndex,
+        geoCodedList,
+        inputValue,
+        handleInput,
         setActiveCityCoords,
-      }}>
+      }}
+    >
+      <GlobalContextUpdate.Provider value={{ setActiveCityCoords }}>
         {children}
       </GlobalContextUpdate.Provider>
     </GlobalContext.Provider>
   );
 };
 
-// Custom hooks for accessing the context
-export const useGlobalContext = () => {
+// Custom hooks to use the context
+export const useGlobalContext = (): GlobalContextType => {
   const context = useContext(GlobalContext);
   if (!context) {
     throw new Error("useGlobalContext must be used within a GlobalContextProvider");
@@ -298,12 +172,12 @@ export const useGlobalContext = () => {
   return context;
 };
 
-export const useGlobalContextUpdate = () => {
-  const setForecast = useContext(GlobalContextUpdate);
-  if (!setForecast) {
-    throw new Error("useGlobalContextUpdate must be used within a GlobalContextProvider");
+export const useGlobalContextUpdate = (): GlobalContextUpdateType => {
+  const context = useContext(GlobalContextUpdate);
+  if (!context) {
+    throw new Error(
+      "useGlobalContextUpdate must be used within a GlobalContextProvider"
+    );
   }
-  return setForecast;
+  return context;
 };
-
-export default GlobalContextProvider;
