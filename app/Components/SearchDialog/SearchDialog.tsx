@@ -36,7 +36,8 @@ function SearchDialog() {
 
         <DialogContent className="p-0">
           <Command className=" rounded-lg border shadow-md">
-            <CommandInput
+            <input
+              className="border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-blue-500"
               value={inputValue}
               onChangeCapture={handleInput}
               placeholder="Type a command or search..."
