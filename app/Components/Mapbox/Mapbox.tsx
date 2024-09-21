@@ -75,7 +75,8 @@
 // export default Mapbox;
 
 "use client";
-
+import { Map as LeafletMap } from 'leaflet';  
+import { useMap } from 'react-leaflet';
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import "leaflet/dist/leaflet.css";
@@ -84,11 +85,9 @@ import { MapContainerProps } from "react-leaflet";
 
 const MapContainer = dynamic<MapContainerProps>(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLayer), { ssr: false });
-const useMap = dynamic(() => import("react-leaflet").then(mod => mod.useMap), { ssr: false });
-
+// const useMap = dynamic(() => import("react-leaflet").then(mod => mod.useMap), { ssr: false });
 function FlyToActiveCity({ activeCityCords }: { activeCityCords: any }) {
-  const map = useMap();
-
+  const map = useMap() as LeafletMap;
   useEffect(() => {
     if (map && map.flyTo && activeCityCords) {
       const zoomLev = 13;
