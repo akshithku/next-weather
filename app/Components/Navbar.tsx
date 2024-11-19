@@ -6,19 +6,28 @@ import ThemeDropdown from './ThemeDropdown/ThemeDropdown';
 import SearchDialog from './SearchDialog/SearchDialog';
 import { useGlobalContext } from '../context/globalContext';
 import Link from 'next/link';
+import Image from "next/image";
+
 function Navbar() {
   const state = useGlobalContext();
   // console.log(state);
   return (
     <div className='w-full py-4 flex items-center justify-between'>
-        <div className="left"></div>
+        <div className="left">
+        <Image
+            src="/logo.png"
+            alt="compass"
+            width={220}
+            height={120}
+          />
+        </div>
         <div className="search-container flex shrink-0 w-full gap-2 sm:w-fit">
           <SearchDialog/>
          <div className="btn-group flex items-center gap-2">
 
          <ThemeDropdown/>
           <Button className="source-code flex items-center gap-3" >
-          <Link className='flex items-center gap-3' href={'https://github.com/akshithku'}>
+          <Link className='flex items-center gap-3' href={'https://github.com/akshithku/next-weather'}>
             {github}Source code
             </Link>
             </Button>
